@@ -1,4 +1,4 @@
-import type { RateLimitResult } from "./types.js";
+import type { RateLimitResult } from "@/types";
 
 /**
  * Pure fixed-window evaluation logic (no I/O, no Date calls).

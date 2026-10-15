@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "lib": ["ES2022"],
     "outDir": "dist",
     "rootDir": ".",
@@ -18,6 +18,11 @@
     "declarationMap": true,
     "sourceMap": true,
     "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "isolatedModules": true,
     "verbatimModuleSyntax": true
   },

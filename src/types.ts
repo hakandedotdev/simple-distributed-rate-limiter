@@ -1,17 +1,18 @@
+import type { Static } from "@sinclair/typebox";
+import type { RateLimitConfigSchema } from "@/schemas";
+
 /**
  * Core types for the rate limiter.
  *
-*/
+ * Validation lives in `schema.ts` (TypeBox).
+ */
 
-/** Configuration for a rate limiter instance. */
-export interface RateLimitConfig {
-  /** Max number of points (requests/tokens) allowed per window. Must be > 0. */
-  points: number;
-  /** Window length in seconds. Must be > 0. */
-  durationSec: number;
-  /** Optional namespace so multiple limiters can share one store. */
-  keyPrefix?: string;
-}
+/**
+ * Configuration for a rate limiter instance.
+ * Derived from `RateLimitConfigSchema`, so the type and the validator
+ * cannot drift apart. Field docs live on the schema as `description`s.
+ */
+export type RateLimitConfig = Static<typeof RateLimitConfigSchema>;
 
 /** Result of a single `consume()` call. */
 export interface RateLimitResult {

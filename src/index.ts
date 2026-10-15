@@ -3,24 +3,17 @@ import type {
   RateLimiter,
   RateLimitResult,
   RateLimitStore,
-} from "./core/types.js";
-import { MemoryStore } from "./stores/memory-store.js";
-
-function assertValidConfig(points: number, durationSec: number): void {
-  if (!Number.isInteger(points) || points <= 0) {
-    throw new Error(`createRateLimiter: "points" must be a positive integer, got ${points}`);
-  }
-  if (!Number.isFinite(durationSec) || durationSec <= 0) {
-    throw new Error(
-      `createRateLimiter: "durationSec" must be a positive number, got ${durationSec}`,
-    );
-  }
-}
+} from "@/types";
+import {
+  assertObjectField,
+  assertValidSchema,
+  CreateRateLimiterOptionsSchema,
+  KeySchema,
+} from "@/schemas";
+import { MemoryStore } from "@/stores/memory-store";
 
 function namespacedKey(keyPrefix: string | undefined, key: string): string {
-  if (key.length === 0) {
-    throw new Error("RateLimiter.consume: key must be a non-empty string");
-  }
+  assertValidSchema(KeySchema, key, "RateLimiter: invalid key");
   return keyPrefix === undefined || keyPrefix === "" ? key : `${keyPrefix}:${key}`;
 }
 
@@ -37,10 +30,17 @@ function namespacedKey(keyPrefix: string | undefined, key: string): string {
  * in Phase 2) to share limits across processes.
  */
 export function createRateLimiter(options: CreateRateLimiterOptions): RateLimiter {
-  assertValidConfig(options.points, options.durationSec);
+  assertValidSchema(CreateRateLimiterOptionsSchema, options, "createRateLimiter: invalid options");
+  if (options.store !== undefined) {
+    assertObjectField(options.store, "store", "createRateLimiter: invalid options");
+  }
 
+  // `store` is `unknown` after schema narrowing (no JSON schema can express
+  // the interface); the declared parameter type already guarantees its shape
+  // for TypeScript callers, and the object check above guards JS callers.
   const store: RateLimitStore =
-    options.store ?? new MemoryStore({ points: options.points, durationSec: options.durationSec });
+    (options.store as RateLimitStore | undefined) ??
+    new MemoryStore({ points: options.points, durationSec: options.durationSec });
 
   return {
     points: options.points,
@@ -66,5 +66,18 @@ export function createRateLimiter(options: CreateRateLimiterOptions): RateLimite
 }
 
 export type { CreateRateLimiterOptions, RateLimiter, RateLimitResult, RateLimitStore };
-export { MemoryStore } from "./stores/memory-store.js";
-export { evaluateFixedWindow } from "./core/fixed-window.js";
+export {
+  CreateRateLimiterOptionsSchema,
+  KeyPrefixSchema,
+  KeySchema,
+  MemoryStoreOptionsSchema,
+  PointsSchema,
+  RateLimitConfigSchema,
+  RedisStoreOptionsSchema,
+  assertValidSchema,
+} from "@/schemas";
+export { MemoryStore } from "@/stores/memory-store";
+export type { MemoryStoreOptions } from "@/stores/memory-store";
+export { RedisStore } from "@/stores/redis-store";
+export type { RedisStoreOptions } from "@/stores/redis-store";
+export { evaluateFixedWindow } from "@/algos/fixed-window";

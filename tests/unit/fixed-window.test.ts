@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateFixedWindow } from "../../src/core/fixed-window.js";
+import { evaluateFixedWindow } from "@/algos/fixed-window";
 
 describe("evaluateFixedWindow (pure logic)", () => {
   const limit = 3;

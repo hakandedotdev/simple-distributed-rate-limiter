@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryStore } from "../../src/stores/memory-store.js";
-import { createRateLimiter } from "../../src/index.js";
+import { MemoryStore } from "@/stores/memory-store";
+import { createRateLimiter } from "@/index";
 
 describe("MemoryStore", () => {
   afterEach(() => {

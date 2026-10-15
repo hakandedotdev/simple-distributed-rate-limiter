@@ -1,5 +1,6 @@
-import { evaluateFixedWindow, type FixedWindowState } from "../core/fixed-window.js";
-import type { RateLimitResult, RateLimitStore } from "../core/types.js";
+import { evaluateFixedWindow, type FixedWindowState } from "@/algos/fixed-window";
+import { assertValidSchema, KeySchema, MemoryStoreOptionsSchema, PointsSchema } from "@/schemas";
+import type { RateLimitResult, RateLimitStore } from "@/types";
 
 export interface MemoryStoreOptions {
   points: number;
@@ -32,14 +33,7 @@ export class MemoryStore implements RateLimitStore {
   private cleanupTimer: NodeJS.Timeout | undefined;
 
   constructor(options: MemoryStoreOptions) {
-    if (!Number.isInteger(options.points) || options.points <= 0) {
-      throw new Error(`MemoryStore: "points" must be a positive integer, got ${options.points}`);
-    }
-    if (!Number.isFinite(options.durationSec) || options.durationSec <= 0) {
-      throw new Error(
-        `MemoryStore: "durationSec" must be a positive number, got ${options.durationSec}`,
-      );
-    }
+    assertValidSchema(MemoryStoreOptionsSchema, options, "MemoryStore: invalid options");
     this.points = options.points;
     this.durationMs = options.durationSec * 1000;
     this.clock = options.clock ?? Date.now;
@@ -55,14 +49,12 @@ export class MemoryStore implements RateLimitStore {
   }
 
   async consume(key: string, pointsToConsume = 1): Promise<RateLimitResult> {
-    if (key.length === 0) {
-      throw new Error("MemoryStore.consume: key must be a non-empty string");
-    }
-    if (!Number.isInteger(pointsToConsume) || pointsToConsume <= 0) {
-      throw new Error(
-        `MemoryStore.consume: pointsToConsume must be a positive integer, got ${pointsToConsume}`,
-      );
-    }
+    assertValidSchema(KeySchema, key, "MemoryStore.consume: invalid key");
+    assertValidSchema(
+      PointsSchema,
+      pointsToConsume,
+      "MemoryStore.consume: invalid pointsToConsume",
+    );
     const nowMs = this.clock();
     const { result, nextState } = evaluateFixedWindow({
       state: this.buckets.get(key),

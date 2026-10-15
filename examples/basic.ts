@@ -1,4 +1,4 @@
-import { createRateLimiter } from "../src/index.js";
+import { createRateLimiter } from "@/index";
 
 const limiter = createRateLimiter({ points: 5, durationSec: 60 });
 
