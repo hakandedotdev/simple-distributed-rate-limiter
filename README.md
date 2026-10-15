@@ -1,7 +1,9 @@
 # Simple Distributed Rate Limiter (TypeScript)
 
-> Phase 2 done: distributed fixed-window limiting via Redis + Lua.
-> `MemoryStore` (single process) and `RedisStore` (multi instance) share one interface.
+Fixed-window rate limiting behind one `RateLimitStore` interface, with two
+backends: `MemoryStore` for a single process, `RedisStore` for a shared global
+limit across any number of Node instances. Configs are validated with TypeBox
+schemas, and the package ships as a bundled ESM build with types.
 
 ```ts
 import { createRateLimiter, RedisStore } from "./src/index";
@@ -28,6 +30,7 @@ pnpm test              # unit tests always run; integration skips without Redis
 pnpm start:redis       # docker compose up -d redis
 pnpm test              # now includes tests/integration (needs Redis on :6379 or REDIS_URL)
 pnpm dev               # runs examples/basic.ts
+pnpm build             # typecheck + tsup ESM bundle with types into dist/
 ```
 
 ## Architecture
@@ -46,13 +49,15 @@ runs the whole read-check-write **atomically on the Redis server**, so the
 global limit holds no matter how many instances race. Covered by the
 "ONE global limit across two concurrent clients" integration test.
 
-Two more details that matter in production:
+Three more details that matter in production:
 
 - **Server-side clock:** the script uses Redis `TIME`, not `Date.now()`,
   so app servers with skewed clocks still agree on window boundaries.
 - **Failure mode is explicit:** `new RedisStore({ failOpen: true })` (default)
   lets traffic through with a best-effort result and reports via `onError`
-  when Redis is down; `failOpen: false` throws so callers can 500 loudly.
+  when Redis is down; `failOpen: false` throws so callers can fail loudly.
+  Commands never hang: a bounded wait covers (re)connection, and the offline
+  queue is disabled.
 - **No key leaks:** every window key gets a `PEXPIRE` equal to the window length.
 
 Keys look like `ratelimit:<limiter-prefix>:<key>`
@@ -62,12 +67,10 @@ prepends its own `keyPrefix` first).
 ## Validation
 
 Every options object is validated with [TypeBox](https://github.com/sinclairzx81/typebox)
-schemas (`src/config.ts`, exported from the package). `RateLimitConfig`
+schemas (`src/schemas.ts`, exported from the package). `RateLimitConfig`
 is _derived_ from its schema, so the type and the validator cannot drift apart.
 Bad configs throw a fail-fast error naming every offending field:
 
 ```text
 createRateLimiter: invalid options: /points: Expected integer to be greater or equal to 1 (got {"points":0,...})
 ```
-
-See [plan.md](./plan.md) for the full phase-by-phase roadmap.

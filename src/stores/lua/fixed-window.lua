@@ -1,6 +1,6 @@
 -- Fixed-window rate limit: atomic check-and-increment with a server-side clock.
 --
--- Mirror of `evaluateFixedWindow` in `src/algo/fixed-window.ts`, minus the
+-- Mirror of `evaluateFixedWindow` in `src/algos/fixed-window.ts`, minus the
 -- injectable clock: time comes from Redis `TIME` so concurrent Node instances
 -- with skewed clocks still agree on window boundaries.
 --
